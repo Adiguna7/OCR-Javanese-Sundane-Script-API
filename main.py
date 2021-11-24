@@ -39,3 +39,17 @@ async def create_file(file: UploadFile = File(...)):
     lst = SundePraser.PraseImage(img)
 
     return {"OCR TEXT": lst}
+
+@app.post("/file/string/")
+async def create_file(file: UploadFile = File(...)):
+    contents = await file.read()
+    nparr = np.fromstring(contents, np.uint8)
+    img = cv.imdecode(nparr, cv.IMREAD_COLOR)[..., ::-1]
+    #print(img.shape)
+    
+    lst = SundePraser.PraseImage(img)
+
+    outstr = ""
+    for s in lst:
+        outstr += s + "\n"
+    return {"OCR STRING": outstr}
