@@ -1,4 +1,4 @@
-from index import run
+from index200 import run
 from fastapi import FastAPI, File, UploadFile, status
 from pydantic import BaseModel
 from fastapi.responses import Response
@@ -36,13 +36,13 @@ app.add_middleware(
 )
 
 @app.post("/image/upload")
-async def analyze_route(file: UploadFile = File(...)):
+async def analyze_route(file: UploadFile = File(...), lang: str = 'jav2'):
     try:
         contents = await file.read()
         nparr = np.fromstring(contents, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)        
         # img_dimensions = str(img.shape)
-        return_text = run(img)
+        return_text = run(img, lang)
 
         return {'code': status.HTTP_200_OK, 'status': 'success', 'message': return_text}
     except Exception as e:
@@ -73,15 +73,15 @@ async def Sunda_AsSingleString(file: UploadFile = File(...)):
     return {"OCR TEXT": outstr}
 
 
-#Startup Stuff
-if __name__ == "__main__":
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    try:
-        s.connect(('10.255.255.255', 1)) # doesn't even have to be reachable
-        IP = s.getsockname()[0]
-    except Exception:
-        IP = '127.0.0.1'
-    finally:
-        s.close()
-    ipaddr = str(IP)
-    uvicorn.run("main:app", host=ipaddr, port=8000, log_level="info")
+# #Startup Stuff
+# if __name__ == "__main__":
+#     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+#     try:
+#         s.connect(('10.255.255.255', 1)) # doesn't even have to be reachable
+#         IP = s.getsockname()[0]
+#     except Exception:
+#         IP = '127.0.0.1'
+#     finally:
+#         s.close()
+#     ipaddr = str(IP)
+#     uvicorn.run("main:app", host=ipaddr, port=8000, log_level="info")
