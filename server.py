@@ -53,7 +53,7 @@ async def analyze_route(file: UploadFile = File(...), lang: str = 'jav2'):
 async def Sunda_MultiLineList(file: UploadFile = File(...)):
     contents = await file.read()
     nparr = np.fromstring(contents, np.uint8)
-    img = cv.imdecode(nparr, cv.IMREAD_COLOR)[..., ::-1] 
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)[..., ::-1] 
     lst = SundaPraser.PraseImage(img)
     return {"OCR TEXT": lst}
 
@@ -62,7 +62,7 @@ async def Sunda_MultiLineList(file: UploadFile = File(...)):
 async def Sunda_AsSingleString(file: UploadFile = File(...)):
     contents = await file.read()
     nparr = np.fromstring(contents, np.uint8)
-    img = cv.imdecode(nparr, cv.IMREAD_COLOR)[..., ::-1]   
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)[..., ::-1]   
     lst = SundaPraser.PraseImage(img)
     outstr = ""
     for s in lst:
