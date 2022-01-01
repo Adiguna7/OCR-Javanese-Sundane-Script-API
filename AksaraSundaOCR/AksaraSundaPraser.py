@@ -51,7 +51,7 @@ class AksaraSundaPraser:
     def PraseImage(self, np_image) -> list:
         
         results = self.model(np_image, size=640)  # includes NMS
-        results.save()
+        #results.save()
         
         resultpd = results.pandas().xyxy[0]
         resultpd["height"] = (resultpd["ymax"] - resultpd["ymin"]) 
@@ -61,8 +61,12 @@ class AksaraSundaPraser:
         
         for l in line_data:
             for detected in l.Detected_Objects:
-                id = detected.Glyph.object_class
-                c = get_char(id)
+                #id = detected.Glyph.object_class
+                #c = get_char(id)
+                #c = str(detected)
+                #print(detected.Glyph.object_class)
+                c = detected.praser()
+                #print('C :', c)
                 l.PrasedString_list.append(c)
         
         result = [a.toString() for a in line_data]

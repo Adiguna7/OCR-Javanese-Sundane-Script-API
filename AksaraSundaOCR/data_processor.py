@@ -1,5 +1,7 @@
 import pandas
 import torch
+from torch.types import Number
+from AksaraSundaOCR.AksaraLatin import *
 import torchvision.ops as ops
 
 class DetectedCharacter:
@@ -16,7 +18,7 @@ class DetectedCharacter:
         self.width = self.Coord_bottomRight[0] - self.Coord_topLeft[0]
         self.height = self.Coord_bottomRight[1] - self.Coord_topLeft[1]
     
-    def box_tensor(self, extension = 1) -> torch.Tensor:
+    def box_tensor(self, extension = 0) -> torch.Tensor:
         """
         Return box tensor
         """
@@ -42,12 +44,25 @@ class DetectedCharacter:
             return True
         return False
     
+    def Scaled_IoU_Box(self, other : 'DetectedCharacter', treshold = 0.9) -> Number:
+        """
+        Check if this object is inside other object
+        """
+        # Check if this object is inside other object
+        box = self.box_tensor(extension = 0.5)
+        other = other.box_tensor(extension = 0)
+        detected_ratio = ops.box_iou(other, box)
+        return detected_ratio.item()
+    
     def Check_Scaled_Box_IoU(self, other : 'DetectedCharacter', treshold = 0.9) -> bool:
         """
         Check if this object is inside other object
         """
         # Check if this object is inside other object
-        detected_ratio = ops.box_iou(self.box_tensor(extension = 1.5), other.box_tensor())
+        box = self.box_tensor(extension = 1.5)
+        other = other.box_tensor(extension = 0)
+        detected_ratio = ops.box_iou(box, other)
+        print(box, other, detected_ratio.item())
         if detected_ratio > treshold:
             return True
         return False
@@ -58,13 +73,42 @@ class AksaraCompound:
         self.Diacritics = None
     
     def Check_Diacratics(self, diacratics : 'DetectedCharacter') -> bool:
-        if self.Glyph.Check_IoU(diacratics):
-            self.Diacritics = diacratics
+        if self.Glyph.Check_Scaled_Box_IoU(diacratics):
+            #self.Diacritics = diacratics
             return True
         return False
     
+    def Scaled_IoU_Box(self, diacratics : 'DetectedCharacter') -> Number:
+        return self.Glyph.Scaled_IoU_Box(diacratics)
+    
+    def Set_Diacratics(self, diacratics : 'DetectedCharacter') -> None:
+        self.Diacritics = diacratics
+    
     def center_y(self) -> float:
         return self.Glyph.center_y
+
+    def center_x(self) -> float:
+        return self.Glyph.center_x
+    
+    def __str__(self) -> str:
+        out_str = ""
+        glyp = get_char(self.Glyph.object_class)
+        glyp.str_builder(out_str)
+        
+        if self.Diacritics is not None:
+            diac = get_char(self.Diacritics.object_class)
+            diac.str_builder(out_str)
+        return out_str
+
+    def praser(self) -> str:
+        out_str = ""
+        glyp = get_char(self.Glyph.object_class)
+        out_str = glyp.str_builder(out_str)
+        #print(out_str)
+        if self.Diacritics is not None:
+            diac = get_char(self.Diacritics.object_class)
+            out_str = diac.str_builder(out_str)
+        return out_str
 
 class ApproximateLine:
     def __init__(self, y : int) -> None:
@@ -80,10 +124,14 @@ class ApproximateLine:
     def append(self, obj : 'DetectedCharacter') -> None:
         self.Detected_Objects.append(obj)
     
+    def sort(self) -> None:
+        self.Detected_Objects.sort(key = lambda x : x.Glyph.center_x )
+    
+    
     def __str__(self) -> str:
         strr = ''
         for s in self.PrasedString_list:
-            strr += s
+            strr += s + ' '
         return strr
 
     def toString(self) -> str:
@@ -103,36 +151,52 @@ def PraseDataframe(df : pandas.DataFrame) -> list:
         detected.append( DetectedCharacter(row) )
     
     #remove duplicates for classes over 33
-    cleaned_detected = []
-    for obj in detected:
-        for other in detected:
-            if obj == other:
-                pass
-            if obj.Check_IoU(other):
-                if obj.confidence < other.confidence:
-                    cleaned_detected.append(other)
-                else:
-                    cleaned_detected.append(obj)
-                break
-        else:
-            cleaned_detected.append(obj)
+    #cleaned_detected = []
+    #for obj in detected:
+    #    for other in detected:
+    #        if obj == other:
+    #            pass
+    #        if obj.Check_IoU(other):
+    #            if obj.confidence < other.confidence:
+    #                cleaned_detected.append(other)
+    #            else:
+    #                cleaned_detected.append(obj)
+    #            break
+    #    else:
+    #        cleaned_detected.append(obj)
         
     
     Detected_Glyphs = []
     Detected_Diacritics = []
-    for det in cleaned_detected:
+    for det in detected:
         if det.object_class < 33:
             Detected_Glyphs.append(det)
+            #print('glyph', det.object_class)
         else:
             Detected_Diacritics.append(det)
     
     Detected_AksaraGroup = []
     for det in Detected_Glyphs:
         compund = AksaraCompound(det)
-        for diac in Detected_Diacritics:
-            if compund.Check_Diacratics(diac):
-                break        
+        possible_diacratics = [d for d in Detected_Diacritics] #if compund.Check_Diacratics(d)]
+        possible_diacratics.sort(key = lambda x : compund.Scaled_IoU_Box(x))
+        clean_diacratics = [d for d in possible_diacratics if compund.Scaled_IoU_Box(d) > 0]
+        clean_diacratics.sort(key = lambda x : x.confidence, reverse = False)
+        if len(clean_diacratics) > 0:
+            compund.Set_Diacratics(clean_diacratics[0])
+            #print(clean_diacratics[0].object_class)
+        #for d in possible_diacratics:
+        #    print()
+        #    if compund.Check_Diacratics(d):
+        #        compund.Set_Diacratics(d)
+        #        #print(compund.Glyph.object_class, compund.Diacritics.object_class)
+        #        break
+            
+        #if len(possible_diacratics) > 0:
+        #    compund.Set_Diacratics(possible_diacratics[0])     
         Detected_AksaraGroup.append(compund)
+    
+    #print('Aksara Group Count :',len(Detected_AksaraGroup))
     
     DetectedLines = []
     for det in Detected_AksaraGroup:
@@ -142,6 +206,13 @@ def PraseDataframe(df : pandas.DataFrame) -> list:
                 break
         else:
             l = ApproximateLine(det.center_y())
+            l.append(det)
             DetectedLines.append(l)    
+    
+    
+    for det in DetectedLines:
+        det.sort()
+    
+    DetectedLines.sort(key = lambda x : x.y_center)
     
     return DetectedLines
