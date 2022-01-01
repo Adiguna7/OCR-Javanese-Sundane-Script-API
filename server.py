@@ -1,23 +1,20 @@
-from index200 import run
 from fastapi import FastAPI, File, UploadFile, status
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from fastapi.responses import Response
-import os
 from random import randint
-import uuid
 import numpy as np
 import cv2
-
-from fastapi import FastAPI, File, UploadFile
-import numpy as np
-import cv2 as cv
-from fastapi.middleware.cors import CORSMiddleware
+import uuid
+import os
 import uvicorn
 import socket
 
+from index200 import run
 from AksaraSundaOCR.AksaraSundaPraser import AksaraSundaPraser
 
-SundaOCR = AksaraSundaPraser('./AksaraSundaOCR/YoloAksara.pt')
+
+SundaPraser = AksaraSundaPraser(model_path= "./AksaraSundaOCR/YoloAksara.pt")
 
 app = FastAPI()
 
@@ -56,8 +53,8 @@ async def analyze_route(file: UploadFile = File(...), lang: str = 'jav2'):
 async def Sunda_MultiLineList(file: UploadFile = File(...)):
     contents = await file.read()
     nparr = np.fromstring(contents, np.uint8)
-    img = cv.imdecode(nparr, cv.IMREAD_COLOR)[..., ::-1] # BGR to RGB
-    lst = SundaOCR.PraseImage(img)
+    img = cv.imdecode(nparr, cv.IMREAD_COLOR)[..., ::-1] 
+    lst = SundaPraser.PraseImage(img)
     return {"OCR TEXT": lst}
 
 ## Single Line String Result
@@ -65,12 +62,13 @@ async def Sunda_MultiLineList(file: UploadFile = File(...)):
 async def Sunda_AsSingleString(file: UploadFile = File(...)):
     contents = await file.read()
     nparr = np.fromstring(contents, np.uint8)
-    img = cv.imdecode(nparr, cv.IMREAD_COLOR)[..., ::-1] #BGR to RGB
-    lst = SundaOCR.PraseImage(img)
+    img = cv.imdecode(nparr, cv.IMREAD_COLOR)[..., ::-1]   
+    lst = SundaPraser.PraseImage(img)
     outstr = ""
     for s in lst:
         outstr += s + "\n"
-    return {"OCR TEXT": outstr}
+    return {"OCR STRING": outstr}
+
 
 
 # #Startup Stuff
