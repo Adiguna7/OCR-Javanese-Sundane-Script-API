@@ -3,11 +3,11 @@ from fastapi import FastAPI, File, UploadFile
 import numpy as np
 import cv2 as cv
 #import AksaraSundaPraser as asp
-from AksaraSundaPraser import AksaraSundaPraser as asp
-from AksaraSundaPraser import *
+import AksaraSundaOCR as asp
+from AksaraSundaOCR.AksaraSundaPraser import AksaraSundaPraser
 from fastapi.middleware.cors import CORSMiddleware
 
-SundePraser = asp.AksaraSundaPraser(model_path= "./AksaraSundaPraser/YoloAksara.pt")
+SundePraser = AksaraSundaPraser(model_path= "./AksaraSundaOCR/YoloAksara.pt")
 
 app = FastAPI()
 
