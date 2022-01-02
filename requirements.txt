@@ -1,5 +1,15 @@
 uvicorn[standard]
+httptools==0.1.*
 fastapi
 numpy
+Pillow
 pytesseract
 pandas
+opencv-python
+torch
+torchvision
+tqdm
+matplotlib
+seaborn
+python-multipart
+requests>=2.23.0

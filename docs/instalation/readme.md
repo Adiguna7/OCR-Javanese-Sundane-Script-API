@@ -14,6 +14,13 @@ Instal Tesseract5.0
 3. move jav2.traineddata to /usr/share/tesseract-ocr/5/tessdata
 
     ``sudo cp jav2.traineddata /usr/share/tesseract-ocr/5/tessdata``
+4. move ind.traineddata to /usr/share/tesseract-ocr/5/tessdata
+
+    ``sudo cp ind.traineddata /usr/share/tesseract-ocr/5/tessdata``
+
+Install Uvicorn dan Depedency lain
+1. ``sudo apt install uvicorn``
+2. ``sudo apt install ffmpeg libsm6 libxext6``
 
 Install Python Depedency
 1. ``sudo pip install -r requirements.txt``
