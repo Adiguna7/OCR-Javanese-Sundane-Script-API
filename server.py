@@ -13,7 +13,7 @@ import socket
 from index200 import run
 from AksaraSundaOCR.AksaraSundaPraser import AksaraSundaPraser
 
-
+ApiVersion = "1.1.1"
 SundaPraser = AksaraSundaPraser(model_path= "./AksaraSundaOCR/YoloAksara.pt")
 
 app = FastAPI()
@@ -49,7 +49,7 @@ async def analyze_route(file: UploadFile = File(...), lang: str = 'jav2'):
 #Aksara Sunda API Endpoint
 
 ## Multi Line Array Result
-@app.get("/api/sunda/lines")
+@app.post("/api/sunda/lines")
 async def Sunda_MultiLineList(file: UploadFile = File(...)):
     contents = await file.read()
     nparr = np.fromstring(contents, np.uint8)
@@ -58,7 +58,7 @@ async def Sunda_MultiLineList(file: UploadFile = File(...)):
     return {"OCR TEXT": lst}
 
 ## Single Line String Result
-@app.get("/api/sunda/string")
+@app.post("/api/sunda/string")
 async def Sunda_AsSingleString(file: UploadFile = File(...)):
     contents = await file.read()
     nparr = np.fromstring(contents, np.uint8)
@@ -69,7 +69,9 @@ async def Sunda_AsSingleString(file: UploadFile = File(...)):
         outstr += s + "\n"
     return {"OCR STRING": outstr}
 
-
+@app.get("/api/version")
+async def getVersion():
+    return ApiVersion
 
 # #Startup Stuff
 # if __name__ == "__main__":
